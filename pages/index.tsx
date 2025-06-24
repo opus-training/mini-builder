@@ -1,115 +1,92 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { useState, useEffect } from 'react';
+import TextEditor from '../components/TextEditor';
+import { useBuilderActions } from '../hooks/useBuilderActions';
+import { DocumentState, BuilderAction } from '../types';
 
 export default function Home() {
+  const [document, setDocument] = useState<DocumentState | null>(null);
+  const [loading, setLoading] = useState(true);
+  const documentId = 'demo-document';
+  
+  const { actions, addAction, syncActions, isSync, actionCount } = useBuilderActions(documentId);
+
+  useEffect(() => {
+    async function loadDocument() {
+      try {
+        const response = await fetch(`/api/document/${documentId}`);
+        const doc = await response.json();
+        setDocument(doc);
+      } catch (error) {
+        console.error('Failed to load document:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDocument();
+  }, []);
+
+  useEffect(() => {
+    if (actionCount > 0) {
+      const timer = setTimeout(() => {
+        syncActions();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [actionCount, syncActions]);
+
+  const handleAction = (action: BuilderAction) => {
+    addAction(action);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading document...</div>
+      </div>
+    );
+  }
+
+  if (!document) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg text-red-600">Failed to load document</div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              pages/index.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <TextEditor 
+        initialDocument={document} 
+        onAction={handleAction}
+      />
+      
+      <div className="max-w-4xl mx-auto mt-6 p-4 bg-white rounded-lg shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-800 mb-3">Sync Status</h3>
+        <div className="flex items-center gap-4 text-sm">
+          <span className={`px-2 py-1 rounded ${isSync ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+            {isSync ? 'Syncing...' : 'Synced'}
+          </span>
+          <span className="text-gray-600">
+            Pending Actions: {actionCount}
+          </span>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        
+        {actions.length > 0 && (
+          <div className="mt-4">
+            <h4 className="font-medium text-gray-800 mb-2">Recent Actions:</h4>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {actions.slice(-5).map((action) => (
+                <div key={action.id} className="text-xs text-gray-600 font-mono">
+                  {action.type} at pos {action.position}
+                  {action.content && `: "${action.content.slice(0, 20)}${action.content.length > 20 ? '...' : ''}"`}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
