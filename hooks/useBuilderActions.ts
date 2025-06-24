@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { BuilderAction, SyncPayload } from '../types';
+import { useState, useCallback, useEffect } from 'react';
+import { BuilderAction, SyncPayload, DocumentState } from '../types';
 
 export function useBuilderActions(documentId: string) {
   const [actions, setActions] = useState<BuilderAction[]>([]);
@@ -19,7 +19,6 @@ export function useBuilderActions(documentId: string) {
       const payload: SyncPayload = {
         documentId,
         actions,
-        lastKnownVersion: lastSyncVersion,
       };
 
       const response = await fetch('/api/sync', {

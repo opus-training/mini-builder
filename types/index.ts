@@ -2,6 +2,7 @@ export interface DocumentState {
   id: string;
   content: string;
   lastModified: number;
+  version?: number;
 }
 
 export interface BuilderAction {
@@ -16,7 +17,6 @@ export interface BuilderAction {
 export interface SyncPayload {
   documentId: string;
   actions: BuilderAction[];
-  lastKnownVersion: number;
 }
 
 export interface SyncResponse {

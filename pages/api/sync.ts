@@ -5,6 +5,20 @@ let documents: Map<string, DocumentState> = new Map();
 let documentVersions: Map<string, number> = new Map();
 let documentActions: Map<string, BuilderAction[]> = new Map();
 
+// Export function to access shared documents
+export function getDocuments() {
+  console.log('documents', documents);
+  return documents;
+}
+
+export function getDocumentVersions() {
+  return documentVersions;
+}
+
+export function getDocumentActions() {
+  return documentActions;
+}
+
 function applyAction(content: string, action: BuilderAction): string {
   switch (action.type) {
     case 'INSERT':
@@ -39,20 +53,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<SyncRe
 
   try {
     const payload: SyncPayload = req.body;
-    const { documentId, actions, lastKnownVersion } = payload;
+    const { documentId, actions } = payload;
 
     const document = initializeDocument(documentId);
     const currentVersion = documentVersions.get(documentId) || 0;
     const allActions = documentActions.get(documentId) || [];
-
-    if (lastKnownVersion < currentVersion) {
-      const conflictActions = allActions.slice(lastKnownVersion);
-      return res.status(409).json({
-        success: false,
-        currentVersion,
-        conflictActions,
-      });
-    }
 
     let updatedContent = document.content;
     for (const action of actions) {
