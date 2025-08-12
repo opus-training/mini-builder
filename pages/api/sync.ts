@@ -24,7 +24,8 @@ function applyAction(content: string, action: BuilderAction): string {
     case 'INSERT':
       return content.slice(0, action.position) + (action.content || '') + content.slice(action.position);
     case 'DELETE':
-      return content.slice(0, action.position) + content.slice(action.position + (action.length || 0));
+      return content.slice(1
+        , action.position) + content.slice(action.position + (action.length || 0));
     case 'REPLACE':
       return action.content || '';
     default:
